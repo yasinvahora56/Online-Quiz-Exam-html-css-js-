@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Quiz</title>
+
+    <style>
+        /* General Styles */
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-size: 14px;
+            overflow-y: auto;
+            /* Allows scrolling on the body */
+        }
+        
+        h2 {
+            text-align: center;
+            color: #333;
+            font-size: 24px;
+            /* Adjusted font size for smaller display */
+            margin-bottom: 30px;
+        }
+        /* Timer */
+        
+        .timer-container {
+            width: 160px;
+            height: 40px;
+            margin-left: auto;
+            display: none;
+        }
+        
+        .timer {
+            font-size: 20px;
+            /* Reduced timer font */
+            font-weight: bold;
+            color: #F2D229;
+            background-color: #333;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+        }
+        
+        .quiz-wrapper {
+            width: 90%;
+            max-width: 1000px;
+            background-color: #ffffff;
+            border-radius: 6px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            margin: auto;
+            padding: 0;
+            /* Remove padding to allow header to take full width */
+            position: relative;
+            overflow-y: auto;
+            max-height: 88vh;
+            /* Keeps container from expanding too tall */
+        }
+        
+        .quiz-header {
+            background-color: #F2D229;
+            color: white;
+            padding: 5px;
+            /* Adjust this for vertical padding */
+            font-size: 22px;
+            font-weight: bold;
+            border-radius: 5px 5px 0 0;
+            /* Rounded corners on the top */
+            border-bottom: 4px solid #F2D229;
+            /* Yellow line */
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            /* Remove margin to align with the container */
+            position: relative;
+            top: 0;
+            z-index: 10;
+        }
+        /* Result and Answer Review */
+        
+        #result,
+        #answer-review {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+        }
+        
+        .quiz-content {
+            padding: 25px;
+            /* Increased padding for more spacious feel */
+        }
+        /* Question Container */
+        
+        .question-container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 25px;
+            font-size: 16px;
+            display: none;
+        }
+        
+        .question-container h2 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .question-container p {
+            font-size: 15px;
+            /* Larger font for question text */
+            margin-bottom: 28px;
+            color: #444;
+        }
+        /* Dropdown styling */
+        
+        .question-container select {
+            width: 200px;
+            padding: 10px;
+            font-size: 16px;
+            /* Larger font size */
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            color: #333;
+        }
+        
+        .question-container select:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        /* Question container for better spacing */
+        
+        .question-container .options {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            /* Left-align options */
+            margin-top: 10px;
+            width: 100%;
+            /* Full width for consistent alignment */
+        }
+        /* Styling for radio and checkbox labels */
+        
+        .question-container label {
+            font-size: 13px;
+            margin: -16px -8px -4px 20px;
+            display: block;
+            cursor: pointer;
+            color: #333;
+            line-height: 1.5;
+        }
+        /* Dropdown, Radio, and Checkbox Styling */
+        
+        .question-container select,
+        .question-container input[type="radio"],
+        .question-container input[type="checkbox"] {
+            transform: scale(1.1);
+            /* Slightly larger scale */
+            margin-right: 12px;
+        }
+        
+        .question-container .options label {
+            font-size: 14px;
+            /* Reduced label font size */
+            margin: 8px 0;
+            color: #333;
+        }
+        
+        .question-container .question-text {
+            font-weight: bold;
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: left;
+            /* Ensure question starts from the left */
+            word-wrap: break-word;
+            /* Allow wrapping of long questions */
+        }
+        
+        .question-container .options label:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .question-container .options input[type="radio"]:checked+label,
+        .question-container .options input[type="checkbox"]:checked+label {
+            background-color: #e6f7e6;
+            /* Slight green tint for checked state */
+            border-color: #28a745;
+            /* Green border for checked state */
+        }
+        
+        .question-container.active {
+            display: block;
+        }
+        /* Progress Bar */
+        
+        #progress-container {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 20px;
+            margin: 10px 0;
+            position: relative;
+            /* Needed for absolute positioning of the percentage */
+        }
+        
+        #progress-bar {
+            width: 0;
+            /* Update this dynamically with JS */
+            height: 18px;
+            background-color: #F2D229;
+            border-radius: 20px;
+            transition: width 0.4s ease;
+        }
+        
+        #progress-percentage {
+            font-size: 16px;
+            position: absolute;
+            /* Change to absolute */
+            top: 50%;
+            /* Center vertically */
+            left: 50%;
+            /* Center horizontally */
+            transform: translate(-50%, -50%);
+            /* Center the text */
+            color: #333;
+            /* Ensure text is visible */
+        }
+        
+        .question-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            margin-top: -20px;
+            text-align: center;
+        }
+        
+        .question-buttons button {
+            width: 20px;
+            /* Increased button width */
+            height: 35px;
+            /* Increased button height */
+            border-radius: 5px;
+            background-color: #F2D229;
+            color: #333;
+            font-weight: bold;
+            font-size: 16px;
+            /* Larger font size for buttons */
+            border: none;
+            cursor: pointer;
+            margin: 0 5px 5px 0;
+        }
+        
+        .question-buttons button:hover {
+            background-color: #333;
+            color: #F2D229;
+        }
+        /* Control Buttons */
+        
+        .button-container {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+            position: relative;
+        }
+        
+        button {
+            font-size: 16px;
+            /* Larger font size for buttons */
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            padding: 10px 20px;
+            /* Larger padding */
+        }
+        
+        .next-btn,
+        .previous-btn {
+            background-color: #007BFF;
+            color: white;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        
+        .next-btn {
+            background-color: #007BFF;
+            color: white;
+        }
+        
+        .submit-btn {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .reset-btn {
+            background-color: #ffc107;
+            color: black;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        /* Result Message */
+        /* Result and Review */
+        /* Result and Answer Review */
+        
+        #result,
+        #answer-review {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+        }
+        
+        .answer-review-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .answer-review-item strong {
+            color: #4A4A4A;
+            font-weight: bold;
+        }
+        /* Styling for user answer */
+        
+        .answer-review-item .user-answer {
+            color: #0056b3;
+            font-style: italic;
+        }
+        /* Styling for correct answer */
+        
+        .answer-review-item .correct-answer {
+            color: #28a745;
+            font-weight: bold;
+        }
+        /* Status Color Styling */
+        
+        .status-correct {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .status-incorrect {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        /* Additional styling for spacing */
+        
+        .answer-review-item hr {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            border: 0;
+            border-top: 1px solid #ddd;
+        }
+        /* Icon styling */
+        
+        .emoji {
+            margin-left: 5px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="quiz-wrapper">
+        <div class="quiz-header">
+            Welcome To Quiz
+            <div class="timer-container">
+                <div class="timer">Time Left: 45:00</div>
+            </div>
+        </div>
+        <div class="quiz-content">
+            <!-- Question Buttons -->
+            <div class="question-buttons" id="questionButtonsContainer"></div>
+
+            <!-- Progress Bar -->
+            <div id="progress-container">
+                <div id="progress-bar"></div>
+                <div id="progress-percentage">0%</div>
+            </div>
+
+            <div id="quiz-container">
+                <!-- Question Content Here -->
+            </div>
+
+            <!-- Buttons -->
+            <div class="button-container">
+                <button class="btn reset-btn" id="resetBtn" onclick="resetQuiz()">Reset</button>
+                <button class="btn previous-btn" id="previousBtn" onclick="goToPreviousQuestion()">Previous</button>
+                <button class="btn next-btn" id="nextBtn" onclick="goToNextQuestion()">Next</button>
+                <button class="btn submit-btn" id="submitBtn" onclick="submitQuiz()">Submit</button>
+            </div>
+
+            <!-- Result Display -->
+            <div id="result"></div>
+
+            <!-- Answer Review -->
+            <div id="answer-review" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentQuestion = 0; // Track the current question
+        const totalQuestions = 36; // Total number of questions
+        const quizData = [{
+
+                  
+            question: "Q 1.    As soon as you are licensed it is %dropdown1% that you keep in contact with %dropdown2% and respond to any letters, emails or %dropdown3% forms of communication.",
+
+                  options: {
+
+                        
+                dropdown1: ["Select an option", " Importent", "important", "operator", "Tfl", "PCO", "other"],
+
+                        dropdown2: ["Select an option", " Importent", "important", "operator", "Tfl", "PCO", "other"],
+
+                        dropdown3: ["Select an option", " Importent", "important", "operator", "Tfl", "PCO", "other"],
+
+                      
+            },
+
+                  correctAnswers: ["important", "Tfl", "other"]
+
+                
+        }, {
+
+                  
+            question: "Q 2.    If the licence %dropdown1% fixed to a PHV are damaged, lost, or stolen the vehicle %dropdown2% should contact TfL immediately %dropdown3%.",
+
+                  options: {
+
+                        
+                dropdown1: ["Select an option", "disck", "discs", "purchage", "owner", "so", "see"],
+
+                        dropdown2: ["Select an option", "disck", "discs", "purchage", "owner", "so", "see"],
+
+                        dropdown3: ["Select an option", "disck", "discs", "purchage", "owner", "so", "see"],
+
+                      
+            },
+
+                  correctAnswers: ["discs", "owner", "so"]
+
+                
+        }, {
+
+                  
+            question: "Q 3.    Heathrow Airport has its own set of %dropdown1% which you can find online. You %dropdown2% know about these in case you %dropdown3% a booking to or from the airport.",
+
+                  options: {
+
+                        
+                dropdown1: ["Select an option", "could", "get", "got", "should", "bylaws", "byelaws"],
+
+                        dropdown2: ["Select an option", "could", "get", "got", "should", "bylaws", "byelaws"],
+
+                        dropdown3: ["Select an option", "could", "get", "got", "should", "bylaws", "byelaws"],
+
+                      
+            },
+
+                  correctAnswers: ["bylaws", "should", "get"]
+
+                
+        }, {
+
+                  
+            question: "Q 4.    If a passenger is %dropdown1% or violent, tell your operator immediately and %dropdown2% them the passenger’s %dropdown3% name and address if you know it.",
+
+                  options: {
+
+                        
+                dropdown1: ["Select an option", "Aggressive", "gave", "aggressive", "give", "full", "contact"],
+
+                        dropdown2: ["Select an option", "Aggressive", "gave", "aggressive", "give", "full", "contact"],
+
+                        dropdown3: ["Select an option", "Aggressive", "gave", "aggressive", "give", "full", "contact"],
+
+                      
+            },
+
+                  correctAnswers: ["aggressive", "give", "full"]
+
+                
+        }, {
+
+                  
+            question: "Q 5.    You should never make %dropdown1% or jokes about someone’s age %dropdown2% religion, disability %dropdown3%.",
+
+                  options: {
+
+                        
+                dropdown1: ["Select an option", "comments", "rase", "race", "sax", "coment", "sexual"],
+
+                        dropdown2: ["Select an option", "comments", "rase", "race", "sax", "coment", "sexual"],
+
+                        dropdown3: ["Select an option", "comments", "rase", "race", "sax", "coment", "sexual"],
+
+                      
+            },
+
+                  correctAnswers: ["comments", "race", "sexual"]
+
+                
+        }, {
+
+                  
+            question: "Q 6.    The %dropdown1% you drive, the less time you have to do something to avoid a %dropdown2%. The resulting %dropdown3% also become more serious as speed increases.",
+
+                  options: {
+
+                        
+                dropdown1: ["Select an option", "faster", "quicker", "collision", "accident", "injuries", "injurie"],
+
+                        dropdown2: ["Select an option", "faster", "quicker", "collision", "accident", "injuries", "injurie"],
+
+                        dropdown3: ["Select an option", "faster", "quicker", "collision", "accident", "injuries", "injurie"],
+
+                      
+            },
+
+                  correctAnswers: ["faster", "collision", "injuries"]
+
+                
+        }, {
+
+                  
+            question: "Q 7.    Be %dropdown1% of where you pick up and drop off %dropdown2% users. Avoid places where the pavement is on a %dropdown3%.",
+
+                  options: {
+
+                        
+                dropdown1: ["Select an option", "careful", "wheelchair", "carefully", "willchair", "hill ", "slope"],
+
+                        dropdown2: ["Select an option", "careful", "wheelchair", "carefully", "willchair", "hill ", "slope"],
+
+                        dropdown3: ["Select an option", "careful", "wheelchair", "carefully", "willchair", "hill ", "slope"],
+
+                      
+            },
+
+                  correctAnswers: ["careful", "wheelchair", "slope"]
+
+                
+        }, {
+
+                  
+            question: "Q 8.    You do not need to give your %dropdown1% and can report %dropdown2%, but the more information you can give the %dropdown3%.",
+
+                  options: {
+
+                        
+                dropdown1: ["Select an option", "details", "correct", "anonymously", "anonimously", "better", "ditails"],
+
+                        dropdown2: ["Select an option", "details", "correct", "anonymously", "anonimously", "better", "ditails"],
+
+                        dropdown3: ["Select an option", "details", "correct", "anonymously", "anonimously", "better", "ditails"],
+
+                      
+            },
+
+                  correctAnswers: ["details", "anonymously", "better"]
+
+                
+        }, {
+
+                  
+            question: "Q 9.    Assistance dogs are highly trained ‘working %dropdown1%’, so should not be treated like pets. Do not %dropdown2% or feed assistance dogs or %dropdown3% them in any way.",
+
+                  options: {
+
+                        
+                dropdown1: ["Select an option", "animals", "animal", "stroke", "strike", "distract", "deestract"],
+
+                        dropdown2: ["Select an option", "animals", "animal", "stroke", "strike", "distract", "deestract"],
+
+                        dropdown3: ["Select an option", "animals", "animal", "stroke", "strike", "distract", "deestract"],
+
+                      
+            },
+
+                  correctAnswers: ["animals", "stroke", "distract"]
+
+                
+        }, {
+
+                  
+            question: "Q 10.    You should not %dropdown1% the personal details of %dropdown2% passenger with %dropdown3%.",
+
+                  options: {
+
+                        
+                dropdown1: ["Select an option", "give", "share", "one", "everyone", "any", "anyone"],
+
+                        dropdown2: ["Select an option", "give", "share", "one", "everyone", "any", "anyone"],
+
+                        dropdown3: ["Select an option", "give", "share", "one", "everyone", "any", "anyone"],
+
+                      
+            },
+
+                  correctAnswers: ["share", "one", "anyone"]
+
+                
+        }, {
+
+                  
+            question: "Q 11.    You %dropdown1% tell TfL immediately if you are arrested %dropdown2%, convicted, or cautioned for %dropdown3% crime.",
+
+                  options: {
+
+                        
+                dropdown1: ["Select an option", "should", "must", "charged", "charge", "any", "every"],
+
+                        dropdown2: ["Select an option", "should", "must", "charged", "charge", "any", "every"],
+
+                        dropdown3: ["Select an option", "should", "must", "charged", "charge", "any", "every"],
+
+                      
+            },
+
+                  correctAnswers: ["must", "charged", "any"]
+
+                
+        }, {
+
+                  
+            question: "Q 12.    You must be %dropdown1% or older %dropdown2% you %dropdown3% for your licence; there is no upper age limit.",
+
+                  options: {
+
+                        
+                dropdown1: ["Select an option", "age", "aged", "when", "then", "apply", "Apply"],
+
+                        dropdown2: ["Select an option", "age", "aged", "when", "then", "apply", "Apply"],
+
+                        dropdown3: ["Select an option", "age", "aged", "when", "then", "apply", "Apply"],
+
+                      
+            },
+
+                  correctAnswers: ["aged", "when", "apply"]
+
+                
+        }, {
+
+                  
+            question: "Q 13.    If there %dropdown1% any restrictions on a driver's right to %dropdown2% and work in the UK, TfL will add an %dropdown3% condition to the licence.",
+
+                  options: {
+
+                        
+                dropdown1: ["Select an option", "is", "are", "live", "leave", "appropriate", "Appropriate"],
+
+                        dropdown2: ["Select an option", "is", "are", "live", "leave", "appropriate", "Appropriate"],
+
+                        dropdown3: ["Select an option", "is", "are", "live", "leave", "appropriate", "Appropriate"],
+
+                      
+            },
+
+                  correctAnswers: ["are", "live", "appropriate"]
+
+                
+        }, {
+
+                  
+            question: "Q 14.    Every PHV must %dropdown1% hire or reward insurance. The insurance %dropdown2% must be valid when the vehicle is licensed, and at all times when the vehicle is %dropdown3% used as a PHV.",
+
+                  options: {
+
+                        
+                dropdown1: ["Select an option", "have", "has", "policy", "policie", "being", "been"],
+
+                        dropdown2: ["Select an option", "have", "has", "policy", "policie", "being", "been"],
+
+                        dropdown3: ["Select an option", "have", "has", "policy", "policie", "being", "been"],
+
+                      
+            },
+
+                  correctAnswers: ["have", "policy", "being"]
+
+                
+        }, {
+
+                  
+            question: "Q 15.    We %dropdown1% you to carry details of the vehicle's valid hire or reward %dropdown2% policy whenever you are %dropdown3%.",
+
+                  options: {
+
+                        
+                dropdown1: ["Select an option", "encourage", "recommend", "insurance", "insurances", "working", "work"],
+
+                        dropdown2: ["Select an option", "encourage", "recommend", "insurance", "insurances", "working", "work"],
+
+                        dropdown3: ["Select an option", "encourage", "recommend", "insurance", "insurances", "working", "work"],
+
+                      
+            },
+
+                  correctAnswers: ["encourage", "insurance", "working"]
+
+                
+        }, {
+
+                  
+            question: "Q 16.    There may be %dropdown1% where TfL %dropdown2% important information about the vehicle you are %dropdown3%.",
+
+                  options: {
+
+                        
+                dropdown1: ["Select an option", "chance", "circumstances", "have", "has", "driver", "driving"],
+
+                        dropdown2: ["Select an option", "chance", "circumstances", "have", "has", "driver", "driving"],
+
+                        dropdown3: ["Select an option", "chance", "circumstances", "have", "has", "driver", "driving"],
+
+                      
+            },
+
+                  correctAnswers: ["circumstances", "has", "driving"]
+
+                
+        }, {
+
+                  
+            question: "Q 17.    Is it possible to have a licence issued for a period shorter than 3 years?",
+
+                  options: {
+
+                        
+                radio: ["A) Yes, the letter that comes with the licence will explain why", "B) No", "C) Yes, but only if over 65", "D) All above"],
+
+                      
+            },
+
+                  correctAnswers: ["A) Yes, the letter that comes with the licence will explain why"]
+
+                
+        }, {
+
+                  
+            question: "Q 18.    What to do when you lose your badge or licence?",
+
+                  options: {
+
+                        
+                radio: ["A) Continue working as normal", "B) Report it to the police", "C) Report it to TFL immediately"],
+
+                      
+            },
+
+                  correctAnswers: ["C) Report it to TFL immediately"]
+
+                
+        }, {
+
+                  
+            question: "Q 19.    If for any reason your PHV Driver's Licence is revoked you must return it to TFL within?",
+
+                  options: {
+
+                        
+                radio: ["A) 14 days", "B) 7 days", "C) 21 days", "D) 45 days"],
+
+                      
+            },
+
+                  correctAnswers: ["B) 7 days"]
+
+                
+        }, {
+
+                  
+            question: "Q 20.    What is the DBS?",
+
+                  options: {
+
+                        
+                radio: ["A) The DBS is a private company that does checks on people's backgrounds", "B) The DBS is a private company authorised by TFL to rent private hire vehicles", "C) The DBS is a public body that does checks on people's backgrounds", "D) All above"],
+
+                      
+            },
+
+                  correctAnswers: ["C) The DBS is a public body that does checks on people's backgrounds"]
+
+                
+        }, {
+
+                  
+            question: "Q 21.    What you must do if you're disqualified from driving?",
+
+                  options: {
+
+                        
+                radio: ["A) Inform TFL immediately - keep your badge and licence safe at home until the disqualification period ends", "B) Stop driving only - there is no need to notify TFL", "C) Inform TFL immediately and return your PHV Driver’s Licence and badge to TFL", "D) Continue driving only - there is no need to notify TFL"],
+
+                      
+            },
+
+                  correctAnswers: ["C) Inform TFL immediately and return your PHV Driver’s Licence and badge to TFL"]
+
+                
+        }, {
+
+                  
+            question: "Q 22.    What is a vehicle inspection?",
+
+                  options: {
+
+                        
+                radio: ["A) An annual vehicle test done together with an MOT test", "B) Not for The PHV driver", "C) An annual vehicle test at one TFL inspection centres to prove that the vehicle meets all the licensing requirements", "D) An annual test at your main dealer"],
+
+                      
+            },
+
+                  correctAnswers: ["C) An annual vehicle test at one TFL inspection centres to prove that the vehicle meets all the licensing requirements"]
+
+                
+        }, {
+
+                  
+            question: "Q 23.    When does a vehicle licensing inspection needs to be done?",
+
+                  options: {
+
+                        
+                radio: ["A) Before you can use your vehicle for private hire purposes", "B) Within 7 days from the day, you started using it for private hire purposes", "C) Within 14 days from the day, you started using it for private hire purposes", "D) Within 28 days from the day, you started using it for private hire purposes"],
+
+                      
+            },
+
+                  correctAnswers: ["A) Before you can use your vehicle for private hire purposes"]
+
+                
+        }, {
+
+                  
+            question: "Q 24.    Are PHV Drivers allowed to carry unaccompanied children in their vehicles?",
+
+                  options: {
+
+                        
+                radio: ["A) Yes, but only if the journey is paid in advance", "B) No, all children must be accompanied by adults", "C) Yes, but your operator should give you the name of the adult who will be meeting the child at the end of the journey", "D) All above"],
+
+                      
+            },
+
+                  correctAnswers: ["C) Yes, but your operator should give you the name of the adult who will be meeting the child at the end of the journey"]
+
+                
+        }, {
+
+                  
+            question: "Q 25.    The information recorded by your operator includes (2 correct answers)",
+
+                  options: {
+
+                        
+                checkbox: ["A) The registration number or other identification of the vehicle that will carry out the booking", "B) The main destination", "C) The preferred type of payment", "D) Your address"],
+
+                      
+            },
+
+                  correctAnswers: ["A) The registration number or other identification of the vehicle that will carry out the booking", "B) The main destination"]
+        }, {
+            question: "Q 26.    When picking up passengers you must (2 correct answers)",
+            options: {
+                checkbox: ["A) Not wait in local car parks or residential streets", "B) Wear a suit & tie", "C) Use an official car park", "D) You can park anywhere"],
+            },
+            correctAnswers: ["A) Not wait in local car parks or residential streets", "C) Use an official car park"]
+        }, {
+            question: "Q 27.    You should tell your operator as soon as your passenger (2 correct answers)",
+            options: {
+                checkbox: ["A) Decides to change the destination of the journey", "B) Asks you to pick up extra passengers or has extra luggage", "C) Wants to use your WIFI", "D) use google navigation"],
+            },
+            correctAnswers: ["A) Decides to change the destination of the journey", "B) Asks you to pick up extra passengers or has extra luggage"]
+        }, {
+            question: "Q 28.    Your operator is responsible for (2 correct answers)",
+            options: {
+                checkbox: ["A) Servicing your private PHV vehicle", "B) Agreeing a fare for the journey with the passenger", "C) arrange for your lunch", "D) Giving them an accurate estimate before a journey starts"],
+            },
+            correctAnswers: ["B) Agreeing a fare for the journey with the passenger", "D) Giving them an accurate estimate before a journey starts"]
+        }, {
+            question: "Q 29.    If your passenger is seriously ill (2 correct answers)",
+            options: {
+                checkbox: ["A) You should always physically check the passenger whether you have had first aid training or not", "B) Call the emergency services on 999 immediately and follow their instructions", "C) You should not try to physically check the passenger or administer first aid yourself unless you are following the instructions of the emergency services or a medical professional, or you have had appropriate first aid or medical training", "D) move them out of the vehicle as quickly as possible"],
+            },
+            correctAnswers: ["B) Call the emergency services on 999 immediately and follow their instructions", "C) You should not try to physically check the passenger or administer first aid yourself unless you are following the instructions of the emergency services or a medical professional, or you have had appropriate first aid or medical training"]
+        }, {
+            question: "Q 30.    When picking up or dropping off passengers in a bus lane you must (Select 2 answer)",
+            options: {
+                checkbox: ["A) Pay careful attention to cyclists and motorcyclists", "B) Use your hazard lights", "C) Enter and leave the bus lane in the most direct and safe way", "D) bus driver can wait for you"],
+            },
+            correctAnswers: ["A) Pay careful attention to cyclists and motorcyclists", "C) Enter and leave the bus lane in the most direct and safe way"]
+        }, {
+            question: "Q 31.    PCNs can be ( Select 2 answer)",
+            options: {
+                checkbox: ["A) Given out by on-street parking attendants or enforcement officers", "B) Can be sent to the registered keeper of the vehicle if the vehicle was caught on camera breaking the law", "C) Given out by members of public if you're caught breaking the law", "D) anyone can issue"],
+            },
+            correctAnswers: ["A) Given out by on-street parking attendants or enforcement officers", "B) Can be sent to the registered keeper of the vehicle if the vehicle was caught on camera breaking the law"]
+        }, {
+            question: "Q 32.    You can receive a Penalty Charge Notice for ( Select 2 answer )",
+            options: {
+                checkbox: ["A) Parking on pivate land", "B) Driving in a bus lanes", "C) Blocking a yellow box junction", "D) for using flash light"],
+            },
+            correctAnswers: ["B) Driving in a bus lanes", "C) Blocking a yellow box junction"]
+        }, {
+            question: "Q 33.    You should take extra care ( Select 2 answer )",
+            options: {
+                checkbox: ["A) When pulling out of junctions", "B) Turning across traffic or passing cyclists or motorcyclists", "C) When using horn or wipers", "D) when you clean your vehicle"],
+            },
+            correctAnswers: ["A) When pulling out of junctions", "B) Turning across traffic or passing cyclists or motorcyclists"]
+        }, {
+            question: "Q 34.    To reduce ridesharing problems, it is always a good idea to ( Select 2 answer )",
+            options: {
+                checkbox: ["A) Refuse the booking", "B) Turning across traffic or passing cyclists or motorcyclists", "C) Confirm with each separate passenger that they have booked a ride-share as soon as you pick them up", "D) Explain how many other people will pick up the predicted route"],
+            },
+            correctAnswers: ["C) Confirm with each separate passenger that they have booked a ride-share as soon as you pick them up", "D) Explain how many other people will pick up the predicted route"]
+        }, {
+            question: "Q 35.   TfL believes it is important to provide a public transport system which all people can use, so that older and disabled people have the same opportunities to travel as all other people. TfL expects PHV drivers to deliver a high standard of customer service to all passengers, whatever their needs. However, we know that some passengers may need more help. This section gives you information, advice and tips on what you can do to help disabled passengers and other passengers that require assistance <b style='color:red; text-transform: uppercase;'><i>Which of the following statements is correct?<i></b>",
+            options: {
+                radio: ["A) TfL aims to ensure that all people, including older and disabled individuals, can use the public transport system.", "B) As a PHV driver, you can wave at members of the public to signal you are free to take bookings.", "C) TfL expects PHV drivers to maintain a high standard of customer service for all passengers, regardless of their needs.", "D) 0 mg per 100 ml of blood"],
+            },
+            correctAnswers: ["A) TfL aims to ensure that all people, including older and disabled individuals, can use the public transport system."]
+        }, {
+            question: "Q 36.   If a police officer or TfL Authorised Officer asks to see your licence, you must let them see it there and then or within a maximum of seven days. The PHV operator(s) you work with must keep copies of your PHV driver’s licence and your DVLA/NI/EU/EEA driving licence. The letter that comes with your licence contains important information about your responsibilities as a London PHV driver, including any conditions you must meet. It is important that you read this letter carefully and make sure you understand it. <b style='color:red; text-transform: uppercase;'><i>Which of the following statements is correct?<i></b>",
+            options: {
+                radio: ["A) Ignore the request.", "B) Show it there and then or within a maximum of seven days.", "C) Show it within 30 days.", "D) Show it within 45 days."],
+            },
+            correctAnswers: ["B) Show it there and then or within a maximum of seven days."]
+        }, ]; // Add your quiz data here
+
+        // let timerInterval;
+
+
+        // Function to create buttons
+        function createQuestionButtons() {
+            const container = document.getElementById('questionButtonsContainer');
+
+            for (let i = 1; i <= totalQuestions; i++) {
+                const button = document.createElement('button');
+                button.textContent = i; // Button text as question number
+
+                // Click event for redirection to specific question
+                button.addEventListener('click', () => {
+                    goToQuestion(i); // Call function to go to specific question
+                });
+
+                container.appendChild(button);
+            }
+        }
+
+        // Function to go to specific question
+        function goToQuestion(questionNumber) {
+            currentQuestionIndex = questionNumber - 1; // Set the current question index
+            loadQuestion(currentQuestionIndex); // Load the specific question
+            currentQuestion = currentQuestionIndex; // Ensure the currentQuestion variable is in sync
+            updateProgress();
+        }
+
+        function loadQuestion(questionIndex) {
+            const questionContainers = document.querySelectorAll('.question-container');
+
+            questionContainers.forEach((container, index) => {
+                container.classList.toggle('active', index === questionIndex);
+            });
+
+            updateProgress();
+        }
+
+
+        // Call the function to create buttons when the quiz loads
+        createQuestionButtons();
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Timer sirf start hoga jab "Start Quiz" button click hoga
+            document.getElementById('startQuizBtn').addEventListener('click', function() {
+                // Instruction page ko hide karein aur quiz content aur timer ko show karein
+                introMessage.style.display = 'none';
+                document.querySelector('.quiz-content').style.display = 'block';
+                document.querySelector('.timer-container').style.display = 'block';
+
+                // Timer ko start karein
+                startTimer();
+
+                // Show progress bar aur question buttons
+                document.getElementById('progress-container').style.display = 'block';
+                document.getElementById('questionButtonsContainer').style.display = 'block';
+            });
+
+            // Reset button par click karte waqt timer ko reset karein
+            document.getElementById('resetBtn').addEventListener('click', function() {
+                resetTimer(); // Timer reset karein
+                location.reload(); // Page reload karke instructions par wapas aaye
+            });
+        });
+
+        // Initial timer variables
+        let timerInterval;
+        let isTimerRunning = false;
+        let timeLeft = 45 * 60; // 45 minutes in seconds
+
+        // Timer start function
+        function startTimer() {
+            if (!isTimerRunning) {
+                isTimerRunning = true;
+                timerInterval = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        const minutes = Math.floor(timeLeft / 60);
+                        const seconds = timeLeft % 60;
+                        document.querySelector('.timer').textContent =
+                            `Time Left: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    } else {
+                        stopTimer();
+                        submitQuiz(); // Auto-submit when time is up
+                    }
+                }, 1000);
+            }
+        }
+
+        // Timer stop function
+        function stopTimer() {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+        }
+
+        // Reset timer function
+        function resetTimer() {
+            stopTimer();
+            timeLeft = 45 * 60;
+            document.querySelector('.timer').textContent = `Time Left: 45:00`;
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+
+            document.getElementById('startQuizBtn').addEventListener('click', startTimer);
+
+
+            document.querySelector('button[type="submit"]').addEventListener('click', stopTimer);
+        });
+
+
+
+        // window.onload = startTimer;
+
+
+        // Dragging functionality
+        const timerContainer = document.querySelector('.timer-container');
+        let isDragging = false;
+        let offsetX, offsetY;
+
+        timerContainer.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            offsetX = e.clientX - timerContainer.getBoundingClientRect().left;
+            offsetY = e.clientY - timerContainer.getBoundingClientRect().top;
+            document.body.style.cursor = 'grabbing'; // Change cursor to grabbing
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                timerContainer.style.left = `${e.clientX - offsetX}px`;
+                timerContainer.style.top = `${e.clientY - offsetY}px`;
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            document.body.style.cursor = 'default'; // Reset cursor
+        });
+
+
+        function updateProgress() {
+            const progressPercentage = ((currentQuestion + 1) / totalQuestions) * 100;
+            document.getElementById('progress-bar').style.width = `${progressPercentage}%`;
+            document.getElementById('progress-percentage').textContent = `${Math.round(progressPercentage)}%`;
+        }
+
+        function goToPreviousQuestion() {
+            if (currentQuestion > 0) {
+                // Hide the current question
+                document.querySelectorAll('.question-container')[currentQuestion].classList.remove('active');
+
+                // Decrement currentQuestion to move to the previous question
+                currentQuestion--;
+
+                // Show the previous question
+                // document.querySelectorAll('.question-container')[currentQuestion].classList.add('active');
+                loadQuestion(currentQuestion);
+
+
+                updateProgress();
+            }
+        }
+
+
+
+        function generateQuestion(questionIndex) {
+            const questionData = quizData[questionIndex];
+            const quizContainer = document.getElementById('quiz-container');
+
+            const questionDiv = document.createElement('div');
+            questionDiv.classList.add('question-container');
+            if (questionIndex === 0) questionDiv.classList.add('active');
+
+            // let questionText = questionData.question;
+
+            // let questionText = `<strong>${questionData.question}</strong>`;
+
+            let questionText = `<p style="font-weight: bold; text-align: left; margin-bottom: 3%;">${questionData.question}</p>`;
+
+            // Replace placeholders with dropdowns or radio buttons
+            for (let key in questionData.options) {
+                if (key === 'radio') {
+                    // Radio button handling
+                    questionText += `<div>${questionData.options[key].map(option => `<label><input type="radio" name="question${questionIndex}" value="${option}" onchange="enableNextButton()"> ${option}</label><br>`).join('')}</div>`;
+        } else if (key.startsWith('dropdown')) {
+            // Dropdown handling
+            questionText = questionText.replace(`%${key}%`, `<select class="dropdown" id="${key}-${questionIndex}" style="margin-left: 1%; margin-top: 1%;" onchange="enableNextButton()">
+                ${questionData.options[key].map(option => `<option value="${option}">${option}</option>`).join('')}
+            </select>`);
+        } else if (key === 'checkbox') {
+            // Checkbox handling
+            questionText += `<div>${questionData.options[key].map(option => `<label><input type="checkbox" name="question${questionIndex}" value="${option}" onchange="enableNextButton()"> ${option}</label><br>`).join('')}</div>`;
+        }
+    }
+
+    questionDiv.innerHTML = `<p>${questionText}</p>`;
+    quizContainer.appendChild(questionDiv);
+}
+
+
+
+
+function enableNextButton() {
+    const currentQuestionData = quizData[currentQuestion];
+    const dropdowns = document.querySelectorAll(`select[id^="dropdown"][id$="${currentQuestion}"]`);
+    const radioButtons = document.querySelectorAll(`input[name="question${currentQuestion}"]`);
+    const checkboxes = document.querySelectorAll(`input[name="question${currentQuestion}"]:checked`);
+    
+    let isAnswered = true;
+
+    // Check if any dropdowns are selected
+    if (dropdowns.length > 0) {
+        isAnswered = Array.from(dropdowns).every(dropdown => dropdown.value !== "" && dropdown.value !== "Select"); // Ensure all dropdowns have a selection other than "Select"
+    } 
+
+    // Check if any radio button is selected
+    if (isAnswered && radioButtons.length > 0) {
+        isAnswered = Array.from(radioButtons).some(radio => radio.checked);
+    }
+
+    // Check if at least one checkbox is selected
+    if (isAnswered && checkboxes.length > 0) {
+        isAnswered = checkboxes.length > 0;
+    }
+
+    // Enable or disable the Next button
+    document.getElementById('nextBtn').disabled = false;  
+}
+
+
+function goToNextQuestion() {
+    if (currentQuestion < totalQuestions - 1) {
+        document.querySelectorAll('.question-container')[currentQuestion].classList.remove('active');
+        currentQuestion++;
+        document.querySelectorAll('.question-container')[currentQuestion].classList.add('active');
+        updateProgress();
+    }
+    if (currentQuestion === totalQuestions - 1) {
+        document.getElementById('nextBtn').style.display = 'none';
+        document.getElementById('submitBtn').style.display = 'inline-block';
+    }
+    document.getElementById('submitBtn').style.display = 'inline-block';
+}
+
+// Dropdowns ke pehle option me "Select" add karna
+const dropdowns = document.querySelectorAll('select');
+dropdowns.forEach(dropdown => {
+    const defaultOption = document.createElement('option');
+    defaultOption.value = "Select";
+    defaultOption.text = "Select";
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
+    dropdown.insertBefore(defaultOption, dropdown.firstChild);
+});
+
+
+        
+        
+    
+        function updateQuestionView() {
+            const questionContainers = document.querySelectorAll('.question-container');
+            questionContainers.forEach((container, index) => {
+                container.classList.toggle('active', index === currentQuestion);
+            });
+            document.getElementById('previousBtn').enabled = currentQuestion === 1;
+            document.getElementById('nextBtn').enabled = true; // Reset Next button state
+            document.getElementById('submitBtn').style.display = 'inline-block'; 
+            document.getElementById('progress-bar').style.width = `${((currentQuestion + 1) / totalQuestions) * 100}%`;
+            document.getElementById('progress-percentage').textContent = `${Math.round(((currentQuestion + 1) / totalQuestions) * 100)}%`;
+        }
+    
+        function resetQuiz() {
+    if (confirm('Are you sure you want to reset the quiz?')) {
+        // Clear timer
+        clearInterval(timerInterval);
+        timeLeft = 45 * 60;
+        
+        // Show intro message again
+        introMessage.style.display = 'block';
+
+        // Reload the page only if user confirmed
+        location.reload();
+    }else{
+        
+    }
+}
+
+        
+        
+
+        function submitQuiz() {
+    stopTimer(); // Stop the timer
+
+    const resultContainer = document.getElementById('result');
+    const answerReviewContainer = document.getElementById('answer-review');
+    answerReviewContainer.innerHTML = ''; // Clear previous answers
+
+    let score = 0;
+
+    quizData.forEach((questionData, index) => {
+        let userAnswer = '';
+        let isCorrect = false;
+        const correctAnswer = questionData.correctAnswers.join(', ');
+
+        // Determine user answer based on question type
+        if (questionData.options.radio) {
+            const selectedRadio = document.querySelector(`input[name="question${index}"]:checked`);
+            userAnswer = selectedRadio ? selectedRadio.value : 'No answer selected';
+            isCorrect = userAnswer === correctAnswer;
+        } else if (questionData.options.dropdown1) {
+            const dropdowns = ['dropdown1', 'dropdown2', 'dropdown3'];
+            const userAnswersArray = dropdowns.map(dropdown => {
+                const select = document.getElementById(`${dropdown}-${index}`);
+                return select ? select.value : '';
+            });
+
+            const allAnswered = userAnswersArray.every(answer => answer !== '' && answer !== 'Select an option');
+            if (allAnswered) {
+                userAnswer = userAnswersArray.join(', ');
+                isCorrect = userAnswersArray.every((answer, i) => answer === questionData.correctAnswers[i]);
+            } else {
+                userAnswer = 'Incomplete answer';
+                isCorrect = false;
+            }
+        } else if (questionData.options.checkbox) {
+            const selectedCheckboxes = document.querySelectorAll(`input[name="question${index}"]:checked`);
+            userAnswer = selectedCheckboxes.length ? Array.from(selectedCheckboxes).map(checkbox => checkbox.value).join(', ') : 'No answer selected';
+
+            const userAnswersArray = Array.from(selectedCheckboxes).map(checkbox => checkbox.value).sort();
+            const correctAnswersArray = questionData.correctAnswers.sort();
+
+            isCorrect = userAnswersArray.length === correctAnswersArray.length &&
+                        userAnswersArray.every((answer, i) => answer === correctAnswersArray[i]);
+        }
+
+        if (isCorrect) score++;
+
+        const statusText = isCorrect ? "Correct" : "Wrong";
+        const statusClass = isCorrect ? "status-correct" : "status-incorrect";
+        const emoji = isCorrect ? '✔️' : '❌';
+
+        const reviewItem = document.createElement('div');
+        reviewItem.classList.add('answer-review-item');
+        reviewItem.innerHTML = `
+            <strong>Question ${index + 1}:</strong> ${questionData.question}<br>
+            <strong>Your Answer:</strong> <span class="user-answer" style="margin-bottom: 100px">${userAnswer}</span><br>
+            <strong>Correct Answer:</strong> <span class="correct-answer">${correctAnswer}</span><br>
+            <strong class="${statusClass}">Status: ${statusText} <span class="emoji">${emoji}</span></strong>
+            <hr>
+        `;
+        answerReviewContainer.appendChild(reviewItem);
+    });
+
+    const percentage = (score / quizData.length) * 100;
+    const resultText = percentage >= 60 ? 
+        `<span style="color: blue;">Pass</span>` : 
+        `<span style="color: red;">Fail</span>`;
+
+    resultContainer.innerHTML = `You scored ${score} out of ${quizData.length} (${Math.round(percentage)}%) - ${resultText}`;
+    resultContainer.style.display = 'block'; // Show result
+    answerReviewContainer.style.display = 'block'; // Show answer review
+}
+
+
+// Get all necessary elements
+const submitButton = document.querySelector('.button-container button:nth-child(4)');
+const resetButton = document.querySelector('.button-container button:nth-child(1)');
+const previousButton = document.querySelector('.button-container button:nth-child(2)');
+const nextButton = document.querySelector('.button-container button:nth-child(3)');
+const resultContainer = document.querySelector('#result');
+const answerReview = document.querySelector('#answer-review');
+const questionButtons = document.querySelectorAll('#questionButtonsContainer button');
+const quizContainer = document.querySelector('#quiz-container');
+
+// Function to disable all buttons and questions
+function disableButtons() {
+    // Disable navigation buttons
+    submitButton.disabled = true;
+    previousButton.disabled = true;
+    nextButton.disabled = true;
+    
+    // Disable all question buttons
+    questionButtons.forEach(button => {
+        button.disabled = true;
+    });
+
+    // Disable all radio inputs in questions
+    const radioInputs = quizContainer.querySelectorAll('input[type="radio"]');
+    radioInputs.forEach(input => {
+        input.disabled = true;
+    });
+
+    // Disable all dropdowns/select elements
+    const dropdowns = quizContainer.querySelectorAll('select');
+    dropdowns.forEach(dropdown => {
+        dropdown.disabled = true;
+        dropdown.style.backgroundColor = '#f0f0f0';
+        dropdown.style.opacity = '0.5';
+    });
+}
+
+// Function to enable all buttons and questions
+function enableButtons() {
+    // Enable navigation buttons
+    submitButton.disabled = false;
+    previousButton.disabled = false;
+    nextButton.disabled = false;
+    
+    // Enable all question buttons
+    questionButtons.forEach(button => {
+        button.disabled = false;
+    });
+
+    // Enable all radio inputs in questions
+    const radioInputs = quizContainer.querySelectorAll('input[type="radio"]');
+    radioInputs.forEach(input => {
+        input.disabled = false;
+    });
+
+    // Enable all dropdowns/select elements
+    const dropdowns = quizContainer.querySelectorAll('select');
+    dropdowns.forEach(dropdown => {
+        dropdown.disabled = false;
+        dropdown.style.backgroundColor = '';
+        dropdown.style.opacity = '1';
+    });
+    
+    // Hide result and answer review
+    resultContainer.style.display = 'none';
+    answerReview.style.display = 'none';
+}
+
+// Submit button click handler
+submitButton.addEventListener('click', function() {
+    // Disable all buttons and questions
+    disableButtons();
+    
+    // Show result container
+    resultContainer.style.display = 'block';
+    
+    // Show answer review
+    answerReview.style.display = 'block';
+});
+
+// Reset button click handler
+resetButton.addEventListener('click', function() {
+    // Enable all buttons and questions
+    enableButtons();
+});
+
+// Add minimal styling for disabled state
+document.head.insertAdjacentHTML('beforeend', `
+    <style>
+        /* Disabled State Styling */
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        input[type="radio"]:disabled,
+        select:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+
+        input[type="radio"]:disabled + label {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        select:disabled {
+            cursor: not-allowed;
+        }
+        
+        #result {
+            display: none;
+        }
+    </style>
+`);
+
+// Add this block just before the closing script tag
+document.addEventListener('DOMContentLoaded', function() {
+    // Hide quiz content and timer initially
+    document.querySelector('.quiz-content').style.display = 'none';
+    document.querySelector('.timer-container').style.display = 'none';
+    
+    // Create and show intro message
+    const introMessage = document.createElement('div');
+    introMessage.className = 'quiz-intro';
+    introMessage.innerHTML = `
+        <div class="intro-content" style="text-align: center; padding: 20px; max-width: 600px; margin: 0 auto;">
+            <div class="quiz-rules" style="text-align: left; margin-bottom: 20px;">
+                <h3>Quiz Instructions:</h3>
+                <ul style="list-style-type: disc; padding-left: 20px;">
+                    <li>Total Questions: 36</li>
+                    <li>Time Limit: 45 minutes</li>
+                    <li>You will need to achieve 60% marks to pass</li>
+                    <li>Once you Click on Start Quiz Button, the timer will begin counting down</li>
+                    <li>You can navigate between questions using Question number buttons</li>
+                    <li>After submission Your results will be displayed</li>
+                </ul>
+                <h3>Good Luck 👍</h3>
+            </div>
+            <button id="startQuizBtn" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px;">
+                Start Quiz
+            </button>
+        </div>
+    `;
+    
+    document.querySelector('.quiz-wrapper').insertBefore(introMessage, document.querySelector('.quiz-content'));
+    
+    // Start Quiz button click handler
+    document.getElementById('startQuizBtn').addEventListener('click', function() {
+        // Hide instruction page
+        introMessage.style.display = 'none';
+        // Show quiz content and timer
+        document.querySelector('.quiz-content').style.display = 'block';
+        document.querySelector('.timer-container').style.display = 'block';
+        // Start the timer
+        startTimer();
+        // Show progress bar and question buttons
+        document.getElementById('progress-container').style.display = 'block';
+        document.getElementById('questionButtonsContainer').style.display = 'block';
+    });
+
+    // Reset button click handler
+    document.getElementById('resetBtn').addEventListener('click', function() {
+        resetTimer();
+        location.reload();
+    });
+
+    // Submit button click handler
+    document.querySelector('button[type="submit"]').addEventListener('click', stopTimer);
+});
+
+// Initial setup
+for (let i = 0; i < totalQuestions; i++) {
+    generateQuestion(i);
+}
+
+// Remove this line if it exists
+// startTimer(); // Don't call startTimer here
+
+// Keep this
+updateQuestionView(); // Initialize question view
+    </script>
